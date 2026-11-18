@@ -1,5 +1,7 @@
 # Smart Computer Lab Management and Inventory System
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sasankkuchimanchi/Smart-Lab-Management-Fresh)
+
 A complete, production-ready web application built from scratch with **Python Flask**, **SQLite**, and **Bootstrap 5.3**. Designed for college computer laboratories to track desktop systems, monitor hardware inventory, empower students to report faults, manage repairs, and maintain a verifiable maintenance history with dynamic vector QR code tags.
 
 ---
