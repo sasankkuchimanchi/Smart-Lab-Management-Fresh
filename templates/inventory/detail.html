@@ -105,9 +105,15 @@
                 <div class="mt-2">
                     <span class="badge bg-light text-dark border px-3 py-2 font-monospace">{{ item.serial_number or item.item_name }}</span>
                 </div>
-                <div class="mt-3">
+                <div class="mt-2 text-muted small">
+                    <i class="bi bi-camera me-1 text-info"></i> Scan with phone to report an issue for this item
+                </div>
+                <div class="mt-2 d-flex flex-wrap gap-2 justify-content-center">
+                    <a href="{{ url_for('student_report', inventory_id=item.id) }}" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-megaphone-fill me-1"></i> File Complaint for this Item
+                    </a>
                     <a href="{{ url_for('generate_qr', item_type='inventory', item_id=item.id) }}" download="{{ item.item_name|replace(' ', '_') }}-QR.svg" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-download me-1"></i> Download Vector SVG Tag
+                        <i class="bi bi-download me-1"></i> Download Tag
                     </a>
                 </div>
             </div>

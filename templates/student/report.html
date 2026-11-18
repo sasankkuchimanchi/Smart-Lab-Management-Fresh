@@ -26,6 +26,24 @@
                 </h5>
             </div>
             <div class="card-body p-4">
+                {% if preselected_computer %}
+                    <div class="alert alert-primary d-flex align-items-center mb-4 shadow-sm border-0 bg-primary-subtle text-primary-emphasis">
+                        <i class="bi bi-qr-code-scan fs-3 me-3"></i>
+                        <div>
+                            <div class="fw-bold">QR Tag Identified: {{ preselected_computer.asset_id }}</div>
+                            <small class="text-muted">Located at {{ preselected_computer.lab_location }}. System pre-selected below.</small>
+                        </div>
+                    </div>
+                {% elif preselected_inventory %}
+                    <div class="alert alert-info d-flex align-items-center mb-4 shadow-sm border-0 bg-info-subtle text-info-emphasis">
+                        <i class="bi bi-qr-code-scan fs-3 me-3"></i>
+                        <div>
+                            <div class="fw-bold">QR Tag Identified: {{ preselected_inventory.item_name }}</div>
+                            <small class="text-muted">S/N: {{ preselected_inventory.serial_number or 'N/A' }} &bull; Location: {{ preselected_inventory.location }}. Pre-selected below.</small>
+                        </div>
+                    </div>
+                {% endif %}
+
                 <form method="POST" action="{{ url_for('student_report') }}" id="studentReportForm">
                     
                     <!-- Asset Type Selection (Exactly One Required) -->
@@ -40,16 +58,16 @@
                         <div class="d-flex gap-4 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="target_type" id="targetComputer" value="computer" 
-                                       {% if not request.form.get('target_type') or request.form.get('target_type') == 'computer' %}checked{% endif %}
-                                       onchange="toggleAssetSelection()">
+                                       {% if (selected_inventory_id and not selected_computer_id) or request.form.get('target_type') == 'inventory' %}{% else %}checked{% endif %}
+                                       onchange="toggleAssetSelection(true)">
                                 <label class="form-check-label fw-semibold" for="targetComputer">
                                     <i class="bi bi-display text-primary me-1"></i> Computer System
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="target_type" id="targetInventory" value="inventory" 
-                                       {% if request.form.get('target_type') == 'inventory' %}checked{% endif %}
-                                       onchange="toggleAssetSelection()">
+                                       {% if (selected_inventory_id and not selected_computer_id) or request.form.get('target_type') == 'inventory' %}checked{% endif %}
+                                       onchange="toggleAssetSelection(true)">
                                 <label class="form-check-label fw-semibold" for="targetInventory">
                                     <i class="bi bi-box-seam text-info me-1"></i> Inventory Item / Peripheral
                                 </label>
@@ -159,7 +177,7 @@
 
 {% block scripts %}
 <script>
-function toggleAssetSelection() {
+function toggleAssetSelection(clearOther = false) {
     const isComputer = document.getElementById('targetComputer').checked;
     const compDiv = document.getElementById('computerSelectionDiv');
     const invDiv = document.getElementById('inventorySelectionDiv');
@@ -169,17 +187,17 @@ function toggleAssetSelection() {
     if (isComputer) {
         compDiv.style.display = 'block';
         invDiv.style.display = 'none';
-        invSelect.value = '';
+        if (clearOther) invSelect.value = '';
     } else {
         compDiv.style.display = 'none';
         invDiv.style.display = 'block';
-        compSelect.value = '';
+        if (clearOther) compSelect.value = '';
     }
 }
 
-// Run on page load to restore state if form had validation errors
+// Run on page load to restore state without clearing preselected asset
 document.addEventListener('DOMContentLoaded', function() {
-    toggleAssetSelection();
+    toggleAssetSelection(false);
 });
 </script>
 {% endblock %}

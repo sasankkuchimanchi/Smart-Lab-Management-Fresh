@@ -3,6 +3,7 @@ import io
 import datetime
 from datetime import date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, Response, abort
+from werkzeug.middleware.proxy_fix import ProxyFix
 import qrcode
 import qrcode.image.svg
 
@@ -36,6 +37,9 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # Enable proxy headers support for cloud platforms like Render
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
     app.teardown_appcontext(close_db)
 
     @app.template_filter('format_date')
@@ -58,18 +62,19 @@ def create_app(test_config=None):
     # -------------------------------------------------------------
     @app.route('/qr/<string:item_type>/<int:item_id>')
     def generate_qr(item_type, item_id):
-        """Generates an SVG QR code for either a computer or inventory item."""
+        """Generates an SVG QR code linking directly to the Student Fault Reporting Portal."""
         if item_type == 'computer':
-            item = query_db("SELECT asset_id, lab_location, status FROM computers WHERE id = ?", (item_id,), one=True)
+            item = query_db("SELECT id, asset_id FROM computers WHERE id = ?", (item_id,), one=True)
             if not item:
                 abort(404)
-            qr_content = f"SMARTLAB-PC | ID: {item['asset_id']} | Lab: {item['lab_location']} | Status: {item['status']}"
+            # Direct link so any smartphone camera opens the student portal with this computer selected!
+            qr_content = url_for('student_report', computer_id=item_id, _external=True)
         elif item_type == 'inventory':
-            item = query_db("SELECT item_name, serial_number, location, status FROM inventory WHERE id = ?", (item_id,), one=True)
+            item = query_db("SELECT id, item_name FROM inventory WHERE id = ?", (item_id,), one=True)
             if not item:
                 abort(404)
-            sn = item['serial_number'] or 'N/A'
-            qr_content = f"SMARTLAB-INV | Item: {item['item_name']} | S/N: {sn} | Loc: {item['location']} | Status: {item['status']}"
+            # Direct link so any smartphone camera opens the student portal with this item selected!
+            qr_content = url_for('student_report', inventory_id=item_id, _external=True)
         else:
             abort(400)
 
@@ -492,13 +497,22 @@ def create_app(test_config=None):
 
         selected_computer_id = request.args.get('computer_id', type=int)
         selected_inventory_id = request.args.get('inventory_id', type=int)
+        preselected_computer = None
+        preselected_inventory = None
+
+        if selected_computer_id:
+            preselected_computer = query_db("SELECT * FROM computers WHERE id = ?", (selected_computer_id,), one=True)
+        if selected_inventory_id:
+            preselected_inventory = query_db("SELECT * FROM inventory WHERE id = ?", (selected_inventory_id,), one=True)
 
         return render_template(
             'student/report.html',
             computers=computers,
             inventory_items=inventory_items,
             selected_computer_id=selected_computer_id,
-            selected_inventory_id=selected_inventory_id
+            selected_inventory_id=selected_inventory_id,
+            preselected_computer=preselected_computer,
+            preselected_inventory=preselected_inventory
         )
 
     @app.route('/student/confirmation/<int:id>')
