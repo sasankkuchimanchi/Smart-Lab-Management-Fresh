@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Live Lab Metrics{% endblock %}
+
+{% block content %}
+<!-- Page Header with Action Buttons -->
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title">
+            <i class="bi bi-speedometer2 text-primary me-2"></i>Lab Operations Dashboard
+        </h1>
+        <p class="page-subtitle">Real-time status summaries, asset health, and fault reports directly from SQLite.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('student_report') }}" class="btn btn-outline-success">
+            <i class="bi bi-megaphone-fill me-1"></i> Report Lab Fault
+        </a>
+        <a href="{{ url_for('computers_list') }}" class="btn btn-primary">
+            <i class="bi bi-display me-1"></i> Manage Computers
+        </a>
+    </div>
+</div>
+
+<!-- Section 1: Computer Lab Health Overview -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 fw-bold text-dark mb-0">
+            <i class="bi bi-pc-display-horizontal text-primary me-2"></i>Computer Lab Health
+        </h2>
+        <a href="{{ url_for('computers_list') }}" class="text-decoration-none small fw-semibold text-primary">
+            View All Computers <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    <div class="row g-3">
+        <!-- Total Computers -->
+        <div class="col-6 col-md-3">
+            <div class="card stat-card shadow-sm h-100 p-3">
+                <div class="stat-label">Total Computers</div>
+                <div class="stat-number text-dark">{{ comp_stats.total }}</div>
+                <div class="text-muted small mt-1">Configured Lab Nodes</div>
+            </div>
+        </div>
+        <!-- Working Computers -->
+        <div class="col-6 col-md-3">
+            <div class="card stat-card stat-success shadow-sm h-100 p-3">
+                <div class="stat-label">Working / Operational</div>
+                <div class="stat-number text-success">{{ comp_stats.working }}</div>
+                <div class="text-success small mt-1">
+                    <i class="bi bi-check-circle-fill me-1"></i> Ready for classes
+                </div>
+            </div>
+        </div>
+        <!-- Faulty Computers -->
+        <div class="col-6 col-md-3">
+            <div class="card stat-card stat-danger shadow-sm h-100 p-3">
+                <div class="stat-label">Faulty / Needs Fix</div>
+                <div class="stat-number text-danger">{{ comp_stats.faulty }}</div>
+                <div class="text-danger small mt-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Hardware / OS issue
+                </div>
+            </div>
+        </div>
+        <!-- Under Maintenance -->
+        <div class="col-6 col-md-3">
+            <div class="card stat-card stat-warning shadow-sm h-100 p-3">
+                <div class="stat-label">Under Maintenance</div>
+                <div class="stat-number text-warning">{{ comp_stats.under_maintenance }}</div>
+                <div class="text-warning small mt-1">
+                    <i class="bi bi-tools me-1"></i> Technician servicing
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2: Inventory Status & Complaints Grid -->
+<div class="row g-4 mb-4">
+    <!-- Left Column: Inventory Hardware Stock -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fs-6 fw-bold">
+                    <i class="bi bi-boxes text-info me-2"></i>Hardware & Peripheral Stock
+                </h5>
+                <a href="{{ url_for('inventory_list') }}" class="small text-decoration-none fw-semibold">
+                    View Inventory <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <div class="text-muted small fw-semibold text-uppercase">Tracked Assets</div>
+                            <div class="fs-3 fw-bold text-dark">{{ inv_stats.total_items }}</div>
+                            <div class="small text-secondary">Unique catalog items</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <div class="text-muted small fw-semibold text-uppercase">Total Quantity</div>
+                            <div class="fs-3 fw-bold text-primary">{{ inv_stats.total_quantity }}</div>
+                            <div class="small text-secondary">Total physical units</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-group list-group-flush border-top">
+                    <!-- Available Units -->
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-available me-2">
+                                <i class="bi bi-check2"></i>
+                            </span>
+                            <span class="fw-medium">Available (Spare / Unassigned)</span>
+                        </div>
+                        <span class="badge bg-primary rounded-pill px-3 py-1 fs-6">{{ inv_stats.available_qty }}</span>
+                    </div>
+                    <!-- In-Use Units -->
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-in-use me-2">
+                                <i class="bi bi-laptop"></i>
+                            </span>
+                            <span class="fw-medium">In-Use (Deployed to PCs/Labs)</span>
+                        </div>
+                        <span class="badge bg-secondary rounded-pill px-3 py-1 fs-6">{{ inv_stats.in_use_qty }}</span>
+                    </div>
+                    <!-- Damaged Units -->
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-damaged me-2">
+                                <i class="bi bi-x-circle"></i>
+                            </span>
+                            <span class="fw-medium">Damaged / Non-functional</span>
+                        </div>
+                        <span class="badge bg-danger rounded-pill px-3 py-1 fs-6">{{ inv_stats.damaged_qty }}</span>
+                    </div>
+                    <!-- Under Maintenance Units -->
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-under-maintenance me-2">
+                                <i class="bi bi-wrench"></i>
+                            </span>
+                            <span class="fw-medium">Under Maintenance</span>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-6">{{ inv_stats.maintenance_qty }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Complaints Pipeline -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fs-6 fw-bold">
+                    <i class="bi bi-ticket-detailed text-warning me-2"></i>Fault Complaints Status
+                </h5>
+                <a href="{{ url_for('complaints_list') }}" class="small text-decoration-none fw-semibold">
+                    View All Tickets <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 bg-danger-subtle text-danger rounded-3 text-center border border-danger-subtle">
+                            <div class="small fw-semibold text-uppercase">Active / Open Issues</div>
+                            <div class="fs-3 fw-bold">{{ complaint_stats.open }}</div>
+                            <div class="small">Awaiting full resolution</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-success-subtle text-success rounded-3 text-center border border-success-subtle">
+                            <div class="small fw-semibold text-uppercase">Resolved Issues</div>
+                            <div class="fs-3 fw-bold">{{ complaint_stats.resolved }}</div>
+                            <div class="small">Archived in history</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-group list-group-flush border-top">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-pending me-2">
+                                <i class="bi bi-clock-history"></i>
+                            </span>
+                            <span class="fw-medium">Pending Review</span>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-6">{{ complaint_stats.pending }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-in-progress me-2">
+                                <i class="bi bi-gear-wide-connected"></i>
+                            </span>
+                            <span class="fw-medium">In Progress (Assigned / In Repair)</span>
+                        </div>
+                        <span class="badge bg-primary rounded-pill px-3 py-1 fs-6">{{ complaint_stats.in_progress }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge-status badge-resolved me-2">
+                                <i class="bi bi-check-circle"></i>
+                            </span>
+                            <span class="fw-medium">Resolved & Closed</span>
+                        </div>
+                        <span class="badge bg-success rounded-pill px-3 py-1 fs-6">{{ complaint_stats.resolved }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2 text-muted small">
+                        <span>Total complaints filed all-time:</span>
+                        <span class="fw-bold">{{ complaint_stats.total }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Recent Complaints Table -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <div>
+            <h5 class="mb-0 fs-6 fw-bold">
+                <i class="bi bi-clock-history text-primary me-2"></i>Recent Complaints & Fault Logs
+            </h5>
+            <small class="text-muted">Latest student and admin tickets logged in SQLite</small>
+        </div>
+        <a href="{{ url_for('complaints_list') }}" class="btn btn-sm btn-outline-primary">
+            Manage All Complaints
+        </a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 80px;">Ticket</th>
+                    <th scope="col">Issue Title</th>
+                    <th scope="col">Linked Asset</th>
+                    <th scope="col">Reporter</th>
+                    <th scope="col">Priority</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Reported Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if recent_complaints %}
+                    {% for c in recent_complaints %}
+                    <tr>
+                        <td class="fw-bold text-muted">#{{ c.id }}</td>
+                        <td>
+                            <div class="fw-semibold text-dark">{{ c.title }}</div>
+                            <div class="text-muted small text-truncate" style="max-width: 280px;">{{ c.description }}</div>
+                        </td>
+                        <td>
+                            {% if c.target_type == 'computer' %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-display text-primary me-2"></i>
+                                    <div>
+                                        <div class="fw-semibold">{{ c.computer_asset_id or 'Computer (ID: ' ~ c.computer_id ~ ')' }}</div>
+                                        <div class="text-muted small">{{ c.computer_lab or 'Lab Room' }}</div>
+                                    </div>
+                                </div>
+                            {% elif c.target_type == 'inventory' %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-box-seam text-info me-2"></i>
+                                    <div>
+                                        <div class="fw-semibold">{{ c.inventory_name or 'Inventory Item' }}</div>
+                                        <div class="text-muted small">S/N: {{ c.inventory_sn or 'N/A' }}</div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Unspecified Asset</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="small fw-medium">{{ c.reporter_name }}</div>
+                        </td>
+                        <td>
+                            {% if c.priority == 'High' %}
+                                <span class="badge-status badge-priority-high">
+                                    <i class="bi bi-exclamation-circle-fill"></i> High
+                                </span>
+                            {% elif c.priority == 'Medium' %}
+                                <span class="badge-status badge-priority-medium">
+                                    <i class="bi bi-dash-circle"></i> Medium
+                                </span>
+                            {% else %}
+                                <span class="badge-status badge-priority-low">
+                                    <i class="bi bi-arrow-down-circle"></i> Low
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.status == 'Pending' %}
+                                <span class="badge-status badge-pending">Pending</span>
+                            {% elif c.status == 'In Progress' %}
+                                <span class="badge-status badge-in-progress">In Progress</span>
+                            {% elif c.status == 'Resolved' %}
+                                <span class="badge-status badge-resolved">Resolved</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ c.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">
+                            {{ c.created_at | format_date }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                            No complaints reported yet. All lab systems are operational.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Section 4: Quick Navigation Hub (All Sections Easily Accessible) -->
+<div class="row g-3">
+    <div class="col-12">
+        <h2 class="h6 text-uppercase fw-bold text-muted mb-2 tracking-wide">
+            <i class="bi bi-compass me-1"></i>Quick Navigation Hub
+        </h2>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-lg-3">
+        <a href="{{ url_for('computers_list') }}" class="card text-decoration-none h-100 p-3 shadow-sm border-hover">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 bg-primary-subtle text-primary p-3 fs-4">
+                    <i class="bi bi-display"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Computers</h6>
+                    <p class="text-muted small mb-0">Add, edit specs, labs, and QR tags</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <a href="{{ url_for('inventory_list') }}" class="card text-decoration-none h-100 p-3 shadow-sm border-hover">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 bg-info-subtle text-info p-3 fs-4">
+                    <i class="bi bi-boxes"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Inventory</h6>
+                    <p class="text-muted small mb-0">Peripherals, stock, and month filters</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <a href="{{ url_for('complaints_list') }}" class="card text-decoration-none h-100 p-3 shadow-sm border-hover">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 bg-warning-subtle text-warning p-3 fs-4">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Complaints</h6>
+                    <p class="text-muted small mb-0">Triage issues & track resolutions</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <a href="{{ url_for('maintenance_list') }}" class="card text-decoration-none h-100 p-3 shadow-sm border-hover">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 bg-purple-subtle text-purple p-3 fs-4" style="background-color: #f3e8ff; color: #7e22ce;">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Maintenance</h6>
+                    <p class="text-muted small mb-0">Log repairs, servicing, and costs</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

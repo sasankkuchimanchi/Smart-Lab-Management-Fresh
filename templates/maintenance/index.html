@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance & Repair Management{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title">
+            <i class="bi bi-tools text-secondary me-2"></i>Lab Maintenance & Servicing
+        </h1>
+        <p class="page-subtitle">Track repairs, routine hardware checks, technician servicing, and maintenance expenditure.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('maintenance_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Record Maintenance
+        </a>
+    </div>
+</div>
+
+<!-- Month Filter Bar (Prominently Displayed as Pills) -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body p-3">
+        <div class="d-flex flex-column flex-md-row align-items-md-center gap-2">
+            <span class="fw-bold small text-uppercase text-secondary me-2">
+                <i class="bi bi-calendar3 me-1"></i>Service Month:
+            </span>
+            <div class="filter-pill-container">
+                <a href="{{ url_for('maintenance_list', month='all', work_type=current_type, q=search_query) }}" 
+                   class="filter-pill {% if current_month == 'all' or not current_month %}active{% endif %}">
+                   All Months
+                </a>
+                <a href="{{ url_for('maintenance_list', month='this_month', work_type=current_type, q=search_query) }}" 
+                   class="filter-pill {% if current_month == 'this_month' %}active{% endif %}">
+                   This Month
+                </a>
+                <a href="{{ url_for('maintenance_list', month='last_month', work_type=current_type, q=search_query) }}" 
+                   class="filter-pill {% if current_month == 'last_month' %}active{% endif %}">
+                   Last Month
+                </a>
+                
+                <!-- Dynamic Months from Maintenance Records -->
+                {% for ym in available_months %}
+                    <a href="{{ url_for('maintenance_list', month=ym, work_type=current_type, q=search_query) }}" 
+                       class="filter-pill {% if current_month == ym %}active{% endif %}">
+                       {{ ym }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Type Filter Toolbar -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('maintenance_list') }}" class="row g-2 align-items-center">
+            <input type="hidden" name="month" value="{{ current_month }}">
+
+            <div class="col-12 col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-muted border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0 ps-0" placeholder="Search technician, description, asset...">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4">
+                <select name="work_type" class="form-select" onchange="this.form.submit()">
+                    <option value="" {% if not current_type %}selected{% endif %}>All Work Types</option>
+                    {% for wt in work_types %}
+                        <option value="{{ wt }}" {% if current_type == wt %}selected{% endif %}>{{ wt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-6 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                {% if search_query or current_type or (current_month and current_month != 'all') %}
+                    <a href="{{ url_for('maintenance_list') }}" class="btn btn-outline-secondary" title="Clear Filters">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Maintenance Summary Metrics Bar -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card shadow-sm p-3 h-100">
+            <div class="stat-label">Total Services</div>
+            <div class="stat-number text-dark">{{ records|length }}</div>
+            <div class="text-muted small">Recorded entries</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card stat-success shadow-sm p-3 h-100">
+            <div class="stat-label">Total Expenditure</div>
+            <div class="stat-number text-success">
+                {% set total_cost = records | sum(attribute='cost') %}
+                ₹{{ "%.2f"|format(total_cost) }}
+            </div>
+            <div class="text-muted small">Filtered service cost</div>
+        </div>
+    </div>
+</div>
+
+<!-- Maintenance Table Card -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="fw-bold fs-6">
+            Repair & Servicing History <span class="badge bg-secondary rounded-pill ms-2">{{ records|length }}</span>
+        </div>
+        <div class="text-muted small">
+            Active Filter: <span class="badge bg-light text-dark border">{{ current_month|replace('_', ' ')|title if current_month else 'All' }}</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Linked Asset</th>
+                    <th scope="col">Work Type</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Technician</th>
+                    <th scope="col">Linked Ticket</th>
+                    <th scope="col" class="text-end">Cost</th>
+                    <th scope="col" class="text-end" style="width: 120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if records %}
+                    {% for m in records %}
+                    <tr>
+                        <td class="text-nowrap small fw-medium text-dark">
+                            {{ m.maintenance_date }}
+                        </td>
+                        <td>
+                            {% if m.target_type == 'computer' %}
+                                <a href="{{ url_for('computers_detail', id=m.computer_id) }}" class="fw-semibold text-decoration-none text-primary">
+                                    <i class="bi bi-display me-1"></i>{{ m.computer_asset_id or 'PC #' ~ m.computer_id }}
+                                </a>
+                                <div class="text-muted small">{{ m.computer_lab }}</div>
+                            {% elif m.target_type == 'inventory' %}
+                                <a href="{{ url_for('inventory_detail', id=m.inventory_id) }}" class="fw-semibold text-decoration-none text-info">
+                                    <i class="bi bi-box-seam me-1"></i>{{ m.inventory_name or 'Peripheral #' ~ m.inventory_id }}
+                                </a>
+                                <div class="text-muted small">S/N: {{ m.inventory_sn or 'N/A' }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border fw-medium">{{ m.work_type }}</span>
+                        </td>
+                        <td>
+                            <span class="small text-dark text-truncate d-inline-block" style="max-width: 250px;">
+                                {{ m.description }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="small fw-medium">{{ m.performed_by }}</span>
+                        </td>
+                        <td>
+                            {% if m.complaint_id %}
+                                <a href="{{ url_for('complaints_detail', id=m.complaint_id) }}" class="badge bg-warning-subtle text-warning-emphasis border border-warning text-decoration-none">
+                                    Ticket #{{ m.complaint_id }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">Routine / None</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold text-dark">
+                            ₹{{ "%.2f"|format(m.cost) }}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('maintenance_detail', id=m.id) }}" class="btn btn-outline-secondary" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('maintenance_edit', id=m.id) }}" class="btn btn-outline-primary" title="Edit Record">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="bi bi-tools empty-state-icon"></i>
+                                <h5 class="empty-state-title">No maintenance records found</h5>
+                                <p class="empty-state-text">No service entries match the selected month, type, or search term.</p>
+                                <a href="{{ url_for('maintenance_new') }}" class="btn btn-primary btn-sm">Record Maintenance</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Maintenance Record #' ~ record.id if is_edit else 'Record Maintenance & Service' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="page-header d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="page-title fs-3">
+                    <i class="bi bi-tools text-secondary me-2"></i>{{ 'Edit Maintenance #' ~ record.id if is_edit else 'Record Lab Equipment Maintenance' }}
+                </h1>
+                <p class="page-subtitle">{{ 'Update repair notes, technician information, or cost.' if is_edit else 'Log repair work, parts replacement, hardware diagnostics, or routine checks.' }}</p>
+            </div>
+            <a href="{{ url_for('maintenance_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to History
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fs-6 fw-bold">
+                    <i class="bi bi-wrench-adjustable text-primary me-2"></i>Service Event Details
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('maintenance_edit', id=record.id) if is_edit else url_for('maintenance_new') }}">
+                    
+                    <!-- Asset Type Selection -->
+                    <div class="mb-4 p-3 bg-light rounded-3 border">
+                        <label class="form-label fw-bold text-dark mb-2">
+                            Select Serviced Asset <span class="text-danger">*</span>
+                        </label>
+                        
+                        <div class="d-flex gap-4 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="targetComputer" value="computer" 
+                                       {% if (is_edit and record.target_type == 'computer') or (not is_edit and (not request.form.get('target_type') or request.form.get('target_type') == 'computer')) %}checked{% endif %}
+                                       onchange="toggleMaintenanceAsset()">
+                                <label class="form-check-label fw-semibold" for="targetComputer">
+                                    <i class="bi bi-display text-primary me-1"></i> Computer System
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target_type" id="targetInventory" value="inventory" 
+                                       {% if (is_edit and record.target_type == 'inventory') or (not is_edit and request.form.get('target_type') == 'inventory') %}checked{% endif %}
+                                       onchange="toggleMaintenanceAsset()">
+                                <label class="form-check-label fw-semibold" for="targetInventory">
+                                    <i class="bi bi-box-seam text-info me-1"></i> Inventory Item / Peripheral
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Computer Dropdown -->
+                        <div id="maintCompDiv" class="mt-2">
+                            <label for="computer_id" class="form-label fw-semibold small text-uppercase">
+                                Choose Computer:
+                            </label>
+                            {% set sel_comp = request.form.get('computer_id', record.computer_id if is_edit else prefilled_computer_id)|string %}
+                            <select class="form-select" id="computer_id" name="computer_id">
+                                <option value="">-- Select Computer Terminal --</option>
+                                {% for comp in computers %}
+                                    <option value="{{ comp.id }}" {% if sel_comp == comp.id|string %}selected{% endif %}>
+                                        {{ comp.asset_id }} &bull; {{ comp.lab_location }} ({{ comp.status }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Inventory Dropdown -->
+                        <div id="maintInvDiv" class="mt-2" style="display: none;">
+                            <label for="inventory_id" class="form-label fw-semibold small text-uppercase">
+                                Choose Equipment / Peripheral:
+                            </label>
+                            {% set sel_inv = request.form.get('inventory_id', record.inventory_id if is_edit else prefilled_inventory_id)|string %}
+                            <select class="form-select" id="inventory_id" name="inventory_id">
+                                <option value="">-- Select Inventory Asset --</option>
+                                {% for item in inventory_items %}
+                                    <option value="{{ item.id }}" {% if sel_inv == item.id|string %}selected{% endif %}>
+                                        {{ item.item_name }} ({{ item.category }}) &bull; S/N: {{ item.serial_number or 'N/A' }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Linked Complaint & Work Type -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="complaint_id" class="form-label fw-semibold">
+                                Related Complaint Ticket <span class="text-muted small">(Optional)</span>
+                            </label>
+                            {% set sel_ticket = request.form.get('complaint_id', record.complaint_id if is_edit else prefilled_complaint_id)|string %}
+                            <select class="form-select" id="complaint_id" name="complaint_id">
+                                <option value="">-- None (Routine Service / Internal Work) --</option>
+                                {% for c in complaints %}
+                                    <option value="{{ c.id }}" {% if sel_ticket == c.id|string %}selected{% endif %}>
+                                        #{{ c.id }}: {{ c.title }} ({{ c.status }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="work_type" class="form-label fw-semibold">
+                                Work Type <span class="text-danger">*</span>
+                            </label>
+                            {% set cur_wt = request.form.get('work_type', record.work_type if is_edit else 'Repair') %}
+                            <select class="form-select" id="work_type" name="work_type" required>
+                                {% for wt in work_types %}
+                                    <option value="{{ wt }}" {% if cur_wt == wt %}selected{% endif %}>{{ wt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Description -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold">
+                            Detailed Work Description & Diagnostics <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Describe components tested, replacements installed, or settings adjusted..." required>{{ request.form.get('description', record.description if is_edit else '') }}</textarea>
+                    </div>
+
+                    <!-- Row 4: Performed By, Cost, Date -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-4">
+                            <label for="performed_by" class="form-label fw-semibold">
+                                Performed By (Technician) <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="performed_by" name="performed_by" 
+                                   value="{{ request.form.get('performed_by', record.performed_by if is_edit else '') }}" 
+                                   placeholder="e.g. Vikram Singh (Tech)" required>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="cost" class="form-label fw-semibold">
+                                Service Cost (₹) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="cost" name="cost" 
+                                   value="{{ request.form.get('cost', record.cost if is_edit else '0.00') }}" required>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label for="maintenance_date" class="form-label fw-semibold">
+                                Maintenance Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="maintenance_date" name="maintenance_date" 
+                                   value="{{ request.form.get('maintenance_date', record.maintenance_date if is_edit else default_date) }}" required>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                        <a href="{{ url_for('maintenance_list') }}" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i> {{ 'Update Maintenance Record' if is_edit else 'Save Maintenance Record' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleMaintenanceAsset() {
+    const isComputer = document.getElementById('targetComputer').checked;
+    const compDiv = document.getElementById('maintCompDiv');
+    const invDiv = document.getElementById('maintInvDiv');
+    const compSelect = document.getElementById('computer_id');
+    const invSelect = document.getElementById('inventory_id');
+
+    if (isComputer) {
+        compDiv.style.display = 'block';
+        invDiv.style.display = 'none';
+        invSelect.value = '';
+    } else {
+        compDiv.style.display = 'none';
+        invDiv.style.display = 'block';
+        compSelect.value = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleMaintenanceAsset();
+});
+</script>
+{% endblock %}

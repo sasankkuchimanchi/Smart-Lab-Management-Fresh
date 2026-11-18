@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Inventory Item - ' ~ item.item_name if is_edit else 'Add New Inventory Asset' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="page-header d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="page-title fs-3">
+                    <i class="bi bi-box-seam text-info me-2"></i>{{ 'Edit Item: ' ~ item.item_name if is_edit else 'Add New Inventory Asset' }}
+                </h1>
+                <p class="page-subtitle">{{ 'Update peripheral details, assignment, or status.' if is_edit else 'Catalog lab equipment, peripherals, or spare parts.' }}</p>
+            </div>
+            <a href="{{ url_for('inventory_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fs-6 fw-bold">
+                    <i class="bi bi-info-circle text-primary me-2"></i>Asset Specifications & Deployment
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('inventory_edit', id=item.id) if is_edit else url_for('inventory_new') }}">
+                    <!-- Row 1: Item Name & Category -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-7">
+                            <label for="item_name" class="form-label fw-semibold">
+                                Item / Equipment Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="item_name" name="item_name" 
+                                   value="{{ request.form.get('item_name', item.item_name if is_edit else '') }}" 
+                                   placeholder="e.g. Dell UltraSharp 24 Monitor" required>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                            <label for="category" class="form-label fw-semibold">
+                                Category <span class="text-danger">*</span>
+                            </label>
+                            {% set current_cat = request.form.get('category', item.category if is_edit else 'Monitor') %}
+                            <select class="form-select" id="category" name="category" required>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if current_cat == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Quantity & Serial Number -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-4">
+                            <label for="quantity" class="form-label fw-semibold">
+                                Quantity <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" 
+                                   value="{{ request.form.get('quantity', item.quantity if is_edit else 1) }}" required>
+                        </div>
+
+                        <div class="col-12 col-md-8">
+                            <label for="serial_number" class="form-label fw-semibold">
+                                Serial Number <span class="text-muted small">(Optional / Unique per item)</span>
+                            </label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number" 
+                                   value="{{ request.form.get('serial_number', item.serial_number if is_edit else '') }}" 
+                                   placeholder="e.g. SN-MON-9081">
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Assigned Computer & Location -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="computer_id" class="form-label fw-semibold">
+                                Assigned Computer <span class="text-muted small">(Optional)</span>
+                            </label>
+                            {% set current_comp_id = request.form.get('computer_id', item.computer_id if is_edit else '')|string %}
+                            <select class="form-select" id="computer_id" name="computer_id">
+                                <option value="">-- Not Assigned to any Computer (Stand-alone / Spare) --</option>
+                                {% for comp in computers %}
+                                    <option value="{{ comp.id }}" {% if current_comp_id == comp.id|string %}selected{% endif %}>
+                                        {{ comp.asset_id }} ({{ comp.lab_location }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Links this peripheral to a specific lab desktop.</div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="location" class="form-label fw-semibold">
+                                Physical Location <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   value="{{ request.form.get('location', item.location if is_edit else '') }}" 
+                                   placeholder="e.g. Lab 101 - Programming Lab or Storage Rack" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Status & Purchase Date -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label for="status" class="form-label fw-semibold">
+                                Inventory Status <span class="text-danger">*</span>
+                            </label>
+                            {% set current_status = request.form.get('status', item.status if is_edit else 'Available') %}
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="Available" {% if current_status == 'Available' %}selected{% endif %}>Available (In Stock / Spare)</option>
+                                <option value="In-Use" {% if current_status == 'In-Use' %}selected{% endif %}>In-Use (Deployed)</option>
+                                <option value="Damaged" {% if current_status == 'Damaged' %}selected{% endif %}>Damaged / Broken</option>
+                                <option value="Under Maintenance" {% if current_status == 'Under Maintenance' %}selected{% endif %}>Under Maintenance</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="purchase_date" class="form-label fw-semibold">
+                                Purchase Date <span class="text-muted small">(Optional - YYYY-MM-DD)</span>
+                            </label>
+                            <input type="date" class="form-control" id="purchase_date" name="purchase_date" 
+                                   value="{{ request.form.get('purchase_date', item.purchase_date if is_edit else '') }}">
+                            <div class="form-text">Used for warranty tracking & month filter reporting.</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                        <a href="{{ url_for('inventory_list') }}" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i> {{ 'Update Item' if is_edit else 'Save Inventory Item' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

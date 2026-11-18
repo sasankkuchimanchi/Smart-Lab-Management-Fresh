@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Computer - ' ~ computer.asset_id if is_edit else 'Add New Computer' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="page-header d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="page-title fs-3">
+                    <i class="bi bi-display text-primary me-2"></i>{{ 'Edit Computer: ' ~ computer.asset_id if is_edit else 'Register New Computer Node' }}
+                </h1>
+                <p class="page-subtitle">{{ 'Update system specs, location, and operational status.' if is_edit else 'Add a new computer node to the college lab inventory.' }}</p>
+            </div>
+            <a href="{{ url_for('computers_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fs-6 fw-bold">
+                    <i class="bi bi-info-circle text-primary me-2"></i>Computer Specifications & Lab Details
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('computers_edit', id=computer.id) if is_edit else url_for('computers_new') }}">
+                    <!-- Row 1: Asset ID & Status -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="asset_id" class="form-label fw-semibold">
+                                Unique Asset ID <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="asset_id" name="asset_id" 
+                                   value="{{ request.form.get('asset_id', computer.asset_id if is_edit else '') }}" 
+                                   placeholder="e.g. PC-LAB1-05" required>
+                            <div class="form-text">Must be unique across all lab computers.</div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="status" class="form-label fw-semibold">
+                                Operational Status <span class="text-danger">*</span>
+                            </label>
+                            {% set current_status = request.form.get('status', computer.status if is_edit else 'Working') %}
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="Working" {% if current_status == 'Working' %}selected{% endif %}>Working</option>
+                                <option value="Faulty" {% if current_status == 'Faulty' %}selected{% endif %}>Faulty</option>
+                                <option value="Under Maintenance" {% if current_status == 'Under Maintenance' %}selected{% endif %}>Under Maintenance</option>
+                            </select>
+                            <div class="form-text">Note: A computer cannot be set to 'Working' if active complaints are unresolved.</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Lab Location & IP Address -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="lab_location" class="form-label fw-semibold">
+                                Lab / Room Location <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="lab_location" name="lab_location" 
+                                   value="{{ request.form.get('lab_location', computer.lab_location if is_edit else '') }}" 
+                                   placeholder="e.g. Lab 101 - Programming Lab" required>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="ip_address" class="form-label fw-semibold">
+                                Static IP Address <span class="text-muted small">(Optional)</span>
+                            </label>
+                            <input type="text" class="form-control" id="ip_address" name="ip_address" 
+                                   value="{{ request.form.get('ip_address', computer.ip_address if is_edit else '') }}" 
+                                   placeholder="e.g. 192.168.1.105">
+                        </div>
+                    </div>
+
+                    <hr class="my-4 text-muted">
+
+                    <h6 class="fw-bold mb-3 text-secondary">
+                        <i class="bi bi-cpu me-1"></i>Hardware & Operating System Specifications
+                    </h6>
+
+                    <!-- Row 3: OS & Processor -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="os" class="form-label fw-semibold">
+                                Operating System <span class="text-muted small">(Optional)</span>
+                            </label>
+                            <input type="text" class="form-control" id="os" name="os" 
+                                   value="{{ request.form.get('os', computer.os if is_edit else '') }}" 
+                                   placeholder="e.g. Ubuntu 22.04 LTS / Windows 11 Pro">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="processor" class="form-label fw-semibold">
+                                Processor (CPU) <span class="text-muted small">(Optional)</span>
+                            </label>
+                            <input type="text" class="form-control" id="processor" name="processor" 
+                                   value="{{ request.form.get('processor', computer.processor if is_edit else '') }}" 
+                                   placeholder="e.g. Intel Core i5-12400 (6 Cores)">
+                        </div>
+                    </div>
+
+                    <!-- Row 4: RAM & Storage -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label for="ram" class="form-label fw-semibold">
+                                Memory (RAM) <span class="text-muted small">(Optional)</span>
+                            </label>
+                            <input type="text" class="form-control" id="ram" name="ram" 
+                                   value="{{ request.form.get('ram', computer.ram if is_edit else '') }}" 
+                                   placeholder="e.g. 16 GB DDR4">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="storage" class="form-label fw-semibold">
+                                Storage / Drive <span class="text-muted small">(Optional)</span>
+                            </label>
+                            <input type="text" class="form-control" id="storage" name="storage" 
+                                   value="{{ request.form.get('storage', computer.storage if is_edit else '') }}" 
+                                   placeholder="e.g. 512 GB NVMe SSD">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                        <a href="{{ url_for('computers_list') }}" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i> {{ 'Update Computer' if is_edit else 'Save Computer' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

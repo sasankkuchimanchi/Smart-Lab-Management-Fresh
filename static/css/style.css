@@ -1,0 +1,275 @@
+/* Custom Styling for Smart Lab Management & Inventory System */
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --dark-bg: #0f172a;
+    --card-border: #e2e8f0;
+    --body-bg: #f8fafc;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+}
+
+body {
+    background-color: var(--body-bg);
+    color: var(--text-main);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Navbar Styling */
+.navbar-custom {
+    background-color: #0f172a !important;
+    border-bottom: 2px solid #1e293b;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    font-size: 1.25rem;
+    color: #ffffff !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: #94a3b8 !important;
+    padding: 0.5rem 0.85rem !important;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.nav-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.nav-link.active {
+    color: #ffffff !important;
+    background-color: #2563eb !important;
+    font-weight: 600;
+}
+
+/* Student portal button in navbar */
+.btn-student-portal {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff !important;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.45rem 1rem;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25);
+    transition: all 0.2s ease;
+}
+
+.btn-student-portal:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.35);
+}
+
+/* Page Headers & Cards */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-weight: 700;
+    font-size: 1.75rem;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.card {
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
+    background-color: #ffffff;
+}
+
+.card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--card-border);
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+    border-top-left-radius: 0.75rem !important;
+    border-top-right-radius: 0.75rem !important;
+}
+
+/* Stat Metric Cards */
+.stat-card {
+    border-left: 4px solid var(--primary-color);
+}
+.stat-card.stat-success { border-left-color: #10b981; }
+.stat-card.stat-danger { border-left-color: #ef4444; }
+.stat-card.stat-warning { border-left-color: #f59e0b; }
+.stat-card.stat-info { border-left-color: #06b6d4; }
+.stat-card.stat-purple { border-left-color: #8b5cf6; }
+
+.stat-number {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.825rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Status Badges */
+.badge-status {
+    font-size: 0.775rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Computer & General Statuses */
+.badge-working { background-color: #dcfce7; color: #15803d; }
+.badge-faulty { background-color: #fee2e2; color: #b91c1c; }
+.badge-under-maintenance { background-color: #fef3c7; color: #b45309; }
+
+/* Inventory Statuses */
+.badge-available { background-color: #e0f2fe; color: #0369a1; }
+.badge-in-use { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+.badge-damaged { background-color: #fee2e2; color: #b91c1c; }
+
+/* Complaint Statuses */
+.badge-pending { background-color: #ffedd5; color: #c2410c; }
+.badge-in-progress { background-color: #dbeafe; color: #1d4ed8; }
+.badge-resolved { background-color: #dcfce7; color: #15803d; }
+
+/* Priority Badges */
+.badge-priority-low { background-color: #f1f5f9; color: #475569; }
+.badge-priority-medium { background-color: #fef9c3; color: #854d0e; }
+.badge-priority-high { background-color: #fee2e2; color: #991b1b; font-weight: 700; }
+
+/* Tables */
+.table {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+.table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+}
+
+.table td {
+    padding: 0.85rem 1rem;
+    font-size: 0.925rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* QR Code Display Container */
+.qr-card {
+    text-align: center;
+    background: #ffffff;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+.qr-code-svg {
+    max-width: 180px;
+    height: auto;
+    display: inline-block;
+}
+
+/* Empty States */
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+.empty-state-icon {
+    font-size: 3rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+}
+.empty-state-title {
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.5rem;
+}
+.empty-state-text {
+    color: #64748b;
+    max-width: 400px;
+    margin: 0 auto 1.25rem auto;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 1.25rem 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* Quick Filter Badges / Month Navigation */
+.filter-pill-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.filter-pill {
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.filter-pill:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.filter-pill.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}

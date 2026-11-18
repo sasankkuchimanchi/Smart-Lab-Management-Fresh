@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Computer Management{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title">
+            <i class="bi bi-display text-primary me-2"></i>Computer Lab Systems
+        </h1>
+        <p class="page-subtitle">Track, configure, and manage desktop nodes across college computer labs.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('computers_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add New Computer
+        </a>
+    </div>
+</div>
+
+<!-- Filters and Search Toolbar -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('computers_list') }}" class="row g-2 align-items-center">
+            <div class="col-12 col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-muted border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0 ps-0" placeholder="Search by Asset ID, Lab, or OS...">
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="" {% if not current_status %}selected{% endif %}>All Statuses (Any)</option>
+                    <option value="Working" {% if current_status == 'Working' %}selected{% endif %}>Working Only</option>
+                    <option value="Faulty" {% if current_status == 'Faulty' %}selected{% endif %}>Faulty Only</option>
+                    <option value="Under Maintenance" {% if current_status == 'Under Maintenance' %}selected{% endif %}>Under Maintenance Only</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                {% if search_query or current_status %}
+                    <a href="{{ url_for('computers_list') }}" class="btn btn-outline-secondary" title="Clear Filters">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Computers Table Card -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="fw-bold fs-6">
+            Registered Computers <span class="badge bg-primary rounded-pill ms-2">{{ computers|length }}</span>
+        </div>
+        <div class="text-muted small">
+            Click on any computer for specs and QR identification
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 140px;">Asset ID</th>
+                    <th scope="col">Lab Location</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">IP Address</th>
+                    <th scope="col">Operating System</th>
+                    <th scope="col">Processor / RAM</th>
+                    <th scope="col" class="text-end" style="width: 160px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if computers %}
+                    {% for comp in computers %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('computers_detail', id=comp.id) }}" class="fw-bold text-decoration-none text-primary">
+                                <i class="bi bi-pc-display me-1"></i> {{ comp.asset_id }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="fw-medium text-dark">{{ comp.lab_location }}</div>
+                        </td>
+                        <td>
+                            {% if comp.status == 'Working' %}
+                                <span class="badge-status badge-working">
+                                    <i class="bi bi-check-circle-fill"></i> Working
+                                </span>
+                            {% elif comp.status == 'Faulty' %}
+                                <span class="badge-status badge-faulty">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Faulty
+                                </span>
+                            {% else %}
+                                <span class="badge-status badge-under-maintenance">
+                                    <i class="bi bi-tools"></i> Under Maintenance
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <code class="small text-secondary">{{ comp.ip_address or 'DHCP / None' }}</code>
+                        </td>
+                        <td>
+                            <span class="text-dark small">{{ comp.os or 'Not specified' }}</span>
+                        </td>
+                        <td>
+                            <div class="small fw-medium text-dark">{{ comp.processor or 'Standard CPU' }}</div>
+                            <div class="small text-muted">{{ comp.ram or 'N/A' }} | {{ comp.storage or 'N/A' }}</div>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('computers_detail', id=comp.id) }}" class="btn btn-outline-secondary" title="View Details & QR">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('computers_edit', id=comp.id) }}" class="btn btn-outline-primary" title="Edit Computer">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('computers_delete', id=comp.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete computer {{ comp.asset_id }}?');">
+                                    <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="bi bi-display empty-state-icon"></i>
+                                <h5 class="empty-state-title">No computers found</h5>
+                                <p class="empty-state-text">No computer systems match the current search or filter criteria.</p>
+                                <a href="{{ url_for('computers_new') }}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i> Register a New Computer
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
